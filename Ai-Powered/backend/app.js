@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import authRoutes from './routes/authRoutes.js'
 import contentRoutes from './routes/contentRoutes.js'
-import { errorHandler } from './middlewares/errorMiddleware.js'
+import errorHandler from './middlewares/errorMiddleware.js'
 
 const app = express()
 app.use(cors())
