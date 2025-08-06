@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import axios from '../utils/axiosInstance';
-import { useNavigate } from 'react-router-dom';
+import { useState, useContext } from "react";
+import { registerUser } from "../services/auth";
+import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Register() {
-  const [form, setForm] = useState({ username: '', email: '', password: '' });
+  const [form, setForm] = useState({ username: "", email: "", password: "" });
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -12,16 +14,47 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await axios.post('/auth/register', form);
-    navigate('/login');
+    try {
+      const data = await registerUser(form);
+      login(data);
+      navigate("/");
+    } catch (err) {
+      alert("Registration failed");
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-sm mx-auto mt-10 space-y-4">
-      <input name="username" value={form.username} onChange={handleChange} placeholder="Username" className="border p-2 w-full rounded" />
-      <input name="email" value={form.email} onChange={handleChange} placeholder="Email" className="border p-2 w-full rounded" />
-      <input name="password" type="password" value={form.password} onChange={handleChange} placeholder="Password" className="border p-2 w-full rounded" />
-      <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded w-full">Register</button>
-    </form>
+    <div className="flex justify-center items-center h-screen">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow w-80">
+        <h2 className="text-2xl mb-4 font-semibold">Register</h2>
+        <input
+          name="username"
+          type="text"
+          placeholder="Username"
+          value={form.username}
+          onChange={handleChange}
+          className="mb-2 p-2 w-full border rounded"
+        />
+        <input
+          name="email"
+          type="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          className="mb-2 p-2 w-full border rounded"
+        />
+        <input
+          name="password"
+          type="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          className="mb-4 p-2 w-full border rounded"
+        />
+        <button type="submit" className="bg-green-600 text-white w-full py-2 rounded">
+          Register
+        </button>
+      </form>
+    </div>
   );
 }

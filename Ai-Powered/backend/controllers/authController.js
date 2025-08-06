@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import User from "../models/User.js";
 import { generateToken } from "../utils/generateToken.js";
+import Post from "../models/Post.js"
 
 // @route   POST /api/auth/register
 export const registerUser = asyncHandler(async (req, res) => {
@@ -192,3 +193,22 @@ export const getSuggestedUsers = asyncHandler(async (req, res) => {
 });
 
 
+// GET /api/users/:username
+export const getUserProfile = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  const user = await User.findOne({ username }).select("-password");
+
+  if (!user) throw new ApiError(404, "User not found");
+
+  const posts = await Post.find({ author: user._id }).sort({ createdAt: -1 });
+
+  const isFollowing = user.followers.includes(req.user._id);
+
+  res.json({
+    user,
+    posts,
+    isFollowing,
+    followersCount: user.followers.length,
+    followingCount: user.following.length,
+  });
+});
