@@ -8,7 +8,7 @@ export default function Dashboard() {
 
   const generate = async () => {
     const { data } = await axios.post('/content/generate', { prompt });
-    setResult(data.response);
+    setResult(data.content);
     setPrompt('');
     fetchHistory();
   };
@@ -30,7 +30,7 @@ export default function Dashboard() {
   return (
     <div className="p-4 max-w-2xl mx-auto">
       <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} className="w-full p-2 border rounded" placeholder="Type your prompt..." />
-      <button onClick={generate} className="btn mt-2">Generate</button>
+      <button onClick={generate} className="btn mt-2 bg-blue-600 text-white px-4 py-2 rounded">Generate</button>
 
       {result && <div className="mt-4 p-4 bg-gray-100 rounded">{result}</div>}
 
