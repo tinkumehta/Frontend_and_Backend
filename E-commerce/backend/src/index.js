@@ -8,6 +8,8 @@ import errorHandler from './middleware/error.js'
 
 
 import authRoutes from "./routes/auth.routes.js"
+import productsRoutes from "./routes/products.routes.js"
+import reviewsRoutes from './routes/reviews.routes.js'
 
 config();
 connectDB();
@@ -33,6 +35,8 @@ app.use(express.urlencoded({extended:  true}));
 
 // routes
 app.use("/api/auth", authRoutes);
+app.use("/api/products", productsRoutes);
+app.use("/api/reviews", reviewsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
