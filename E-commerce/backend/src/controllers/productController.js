@@ -149,4 +149,23 @@ export const updateProduct = async(req, res, next) => {
     }
 }
 
-//
+// delete product
+export const deleteProduct = async (req, res, next) => {
+    try {
+        const product = await Product.findById(req.params.id);
+
+        if (product) {
+            // delete image from cloudinary
+            for (const image of product.image){
+                await cloudinary.uploader.destroy(image.public_id);
+            }
+
+            await Product.deleteOne({ _id : req.params.id});
+            res.json({message : 'Product removed'});
+        } else {
+            res.status(404).json({message : 'Product not found'});
+        }
+    } catch (error) {
+        next(error)
+    }
+};
