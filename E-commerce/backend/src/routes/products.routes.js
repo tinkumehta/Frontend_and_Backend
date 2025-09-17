@@ -13,3 +13,6 @@ router.route('/:id')
     .get(getProduct)
     .put(protect, admin, upload.array('images', 5), updateProduct)
     .delete(protect, admin, deleteProduct);
+
+
+export default router;
