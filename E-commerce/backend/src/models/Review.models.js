@@ -18,7 +18,7 @@ const reviewSchema = new mongoose.Schema({
      max : 5
   },
   comment : {
-    type : Boolean,
+    type : String,
     default : false
   },
   isRecommended : {

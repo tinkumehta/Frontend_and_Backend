@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { createReview, getProductReviews, getTopRatedProducts } from "../controllers/reviewController.js";
+import { 
+       createReview, 
+       getProductReviews,
+        getTopRatedProducts } from "../controllers/reviewController.js";
 import {protect} from '../middleware/auth.js'
 
  const router = Router();

@@ -1,5 +1,9 @@
 import {Router} from 'express'
-import { createProduct, deleteProduct, getProduct, getProducts, updateProduct, } from '../controllers/productController.js'
+import { createProduct,
+      deleteProduct, 
+      getProduct,
+       getProducts, 
+      updateProduct, } from '../controllers/productController.js'
 import {protect, admin} from '../middleware/auth.js'
 import upload from '../middleware/upload.js'
 

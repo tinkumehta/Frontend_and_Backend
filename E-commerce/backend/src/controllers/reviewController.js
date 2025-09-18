@@ -58,7 +58,7 @@ export const createReview = async (req, res, next) => {
 
         await product.save();
 
-        res.status(201).json(createReview);
+        res.status(201).json(createdReview);
     } catch (error) {
         next(error);
     }

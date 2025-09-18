@@ -68,40 +68,46 @@ export const getProduct = async (req, res, next) => {
     }
 };
 
-// create Product
+// Create product with default image option
 export const createProduct = async (req, res, next) => {
-    try {
-        const {name, description, price, category, stock} = req.body;
-
-        let images = [];
-        if (req.files && req.files.length > 0) {
-            for(const file of req.files){
-                const result = await cloudinary.uploader.upload(file.path, {
-                    folder: 'products'
-                });
-                images.push({
-                    public_id : result.public_id,
-                    url : result.secure_url
-                });
-            }
-        }
-
-     const product = new Product({
-        name,
-        description,
-        price,
-        category,
-        stock, 
-        images,
-        createdBy : req.user._id
-     });
-
-     const createProduct = await product.save();
-     res.status(201).json(createProduct);
-
-    } catch (error) {
-        next(error);
+  try {
+    const { name, description, price, category, stock } = req.body;
+    
+    let images = [];
+    
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: 'products'
+        });
+        images.push({
+          public_id: result.public_id,
+          url: result.secure_url
+        });
+      }
+    } else {
+      // Add a default image if no images are uploaded
+      images.push({
+        public_id: 'default_product',
+        url: 'https://res.cloudinary.com/your-cloud-name/image/upload/v1631234567/default-product.jpg'
+      });
     }
+    
+    const product = new Product({
+      name,
+      description,
+      price,
+      category,
+      stock,
+      images,
+      createdBy: req.user._id
+    });
+    
+    const createdProduct = await product.save();
+    res.status(201).json(createdProduct);
+  } catch (error) {
+    next(error);
+  }
 };
 
 // update product
@@ -136,7 +142,7 @@ export const updateProduct = async(req, res, next) => {
                         url : result.secure_url
                     });
                 }
-                product.image = images
+                product.images = images
             }
 
             const updatedProduct = await product.save();
@@ -156,7 +162,7 @@ export const deleteProduct = async (req, res, next) => {
 
         if (product) {
             // delete image from cloudinary
-            for (const image of product.image){
+            for (const image of product.images){
                 await cloudinary.uploader.destroy(image.public_id);
             }
 

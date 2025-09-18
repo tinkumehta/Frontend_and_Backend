@@ -25,7 +25,7 @@ import mongoose from "mongoose";
         min : 0, 
         default : 0
     },
-    image : [{
+    images : [{
         public_id : {
             type : String,
             required : true

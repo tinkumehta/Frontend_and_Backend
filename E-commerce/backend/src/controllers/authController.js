@@ -5,10 +5,10 @@ import { generateToken } from '../utils/generateToken.js';
 // Register user
 export const register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email,username, password } = req.body;
 
     const userExists = await User.findOne({
-      $or: [ {email}]
+      $or: [ {email}, {username}]
     });
 
     if (userExists) {
@@ -18,7 +18,7 @@ export const register = async (req, res, next) => {
     const user = await User.create({
       name,
       email,
-     
+     username,
       password
     });
 
@@ -41,6 +41,7 @@ export const register = async (req, res, next) => {
 };
 
 // Login user
+// Login user
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -48,13 +49,28 @@ export const login = async (req, res, next) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
-      generateToken(res, user._id);
+      // Generate token
+      const token = jwt.sign(
+        { id: user._id }, 
+        process.env.JWT_SECRET, 
+        { expiresIn: '30d' }
+      );
       
+      // Set cookie
+      res.cookie('jwt', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development',
+        sameSite: 'strict',
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      });
+      
+      // Also return token in response for API testing
       res.json({
         _id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        token: token // Add this line
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
