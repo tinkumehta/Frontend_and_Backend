@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 // Configure storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../uploads/')); // Make sure this directory exists
+    cb(null, path.join(__dirname, '../uploads/')); // this is  directory exists 
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + '-' + file.originalname);
