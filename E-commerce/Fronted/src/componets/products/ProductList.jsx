@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { productService } from '../../services/productService';
 import ProductCard from './ProductCard';
-import ProductFilters from './ProductFilters';
-import ProductSkeleton from './ProductSkeleton';
+ import ProductFilters from './ProductFilters';
+ import ProductSkeleton from './ProductSkeleton';
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
