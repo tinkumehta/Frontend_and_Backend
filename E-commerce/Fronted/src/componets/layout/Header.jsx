@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { ShoppingCartIcon, UserIcon, LogoutIcon, MenuIcon, XIcon } from '@heroicons/react/outline';
+// Update imports to use the correct paths
+import { 
+  ShoppingCartIcon, 
+  UserIcon, 
+  ArrowRightOnRectangleIcon as LogoutIcon,
+  Bars3Icon as MenuIcon,
+  XMarkIcon as XIcon
+} from '@heroicons/react/24/outline';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

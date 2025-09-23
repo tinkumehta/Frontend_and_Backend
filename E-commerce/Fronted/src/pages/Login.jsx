@@ -26,6 +26,13 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (!credentials.email || !credentials.password) {
+      setError('Please fill in all fields');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -33,6 +40,7 @@ const Login = () => {
       navigate(from, { replace: true });
     } catch (error) {
       console.error('Login error:', error);
+      // Error is already set in AuthContext, no need to set it here
     } finally {
       setIsLoading(false);
     }
@@ -78,6 +86,7 @@ const Login = () => {
                 placeholder="Enter your email"
                 value={credentials.email}
                 onChange={handleChange}
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -94,6 +103,7 @@ const Login = () => {
                 placeholder="Enter your password"
                 value={credentials.password}
                 onChange={handleChange}
+                disabled={isLoading}
               />
             </div>
           </div>

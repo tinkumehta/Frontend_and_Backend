@@ -35,22 +35,60 @@ import {authService} from '../services/authService';
         }
     }, []);
 
-    const login = async (credentials) => {
-        try {
-            setError('');
-            const response = await authService.login(credentials);
-            const {token, ...userData} = response.data;
-
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(userData));
-            setUser(userData);
-
-            return response;
-        } catch (error) {
-            setError(error.response?.data?.message || 'Login failed');
-            throw error;
-        }
-    };
+    // In AuthContext.jsx - Update the login function
+const login = async (credentials) => {
+  try {
+    setError('');
+    const response = await authService.login(credentials);
+    
+    // Debug: Log the response to see the actual structure
+    console.log('Login response:', response);
+    
+    // Handle different response structures
+    let token, userData;
+    
+    if (response.data && response.data.token) {
+      // If token is in response.data
+      token = response.data.token;
+      userData = {
+        _id: response.data._id,
+        name: response.data.name,
+        email: response.data.email,
+        role: response.data.role
+      };
+    } else if (response.data && response.data.user) {
+      // If user data is nested under user property
+      token = response.data.token;
+      userData = response.data.user;
+    } else if (response.token) {
+      // If response is the data directly
+      token = response.token;
+      userData = {
+        _id: response._id,
+        name: response.name,
+        email: response.email,
+        role: response.role
+      };
+    } else {
+      throw new Error('Invalid response format from server');
+    }
+    
+    if (!token) {
+      throw new Error('No token received from server');
+    }
+    
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+    
+    return response;
+  } catch (error) {
+    console.error('Login error details:', error);
+    const errorMessage = error.response?.data?.message || error.message || 'Login failed';
+    setError(errorMessage);
+    throw error;
+  }
+};
 
     const register = async (userData) => {
         try {
