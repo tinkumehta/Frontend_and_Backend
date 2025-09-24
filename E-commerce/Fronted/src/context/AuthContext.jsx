@@ -31,5 +31,40 @@ export const AuthProvider = ({children}) => {
     await getCurrentUser(); // Immediately update
     };
 
+    const login = async (email, password) => {
+        const res = await axios.post('/api/auth/login', {
+            email,
+            password,
+        });
+        localStorage.setItem('token', res.data);
+        await getCurrentUser();
+    };
+
+    const logout =async () => {
+        try {
+            await axios.post('/api/auth/logout');
+            localStorage.removeItem('token');
+            setUser(null);
+            
+        } catch (error) {
+            console.error('Logout error', error)
+        }
+    };
+
+    useEffect(() => {
+        if (localStorage.getItem('token')) {
+            getCurrentUser();
+        } else {
+            setLoading(false);
+        }
+    }, []);
+
+    return (
+        <AuthContext.Provider
+          value={{user, loading, register, login, logout}}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
     
 }
