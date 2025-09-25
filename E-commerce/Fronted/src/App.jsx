@@ -5,18 +5,20 @@ import './App.css'
 import Login from './components/Login/Login'
 import Register from './components/Login/Register'
 import Home from './components/pages/Home'
+import { Footer, Header } from './components'
 
 function App() {
   
 
   return (
     <BrowserRouter>
-      {/* header */}
+     <Header />
       <Routes>
         <Route path='/' element={<Home />} />
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<Register />} />
       </Routes>
+      <Footer />
     </BrowserRouter>
   )
 }

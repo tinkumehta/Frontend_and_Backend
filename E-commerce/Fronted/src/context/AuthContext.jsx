@@ -24,7 +24,7 @@ export const AuthProvider = ({children}) => {
 
     const register = async (formData) => {
         const res = await axios.post('/api/auth/register',  formData, {
-            headers: { 'Content-Type' : 'multipart/form-data'},
+            headers: { 'Content-Type' : 'application/json'},
         }
     );
     localStorage.setItem('token', res.data.token);
@@ -36,7 +36,9 @@ export const AuthProvider = ({children}) => {
             email,
             password,
         });
-        localStorage.setItem('token', res.data);
+        //console.log(res.data);
+        
+        localStorage.setItem('token', res.data.token);
         await getCurrentUser();
     };
 
