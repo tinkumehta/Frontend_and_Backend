@@ -5,7 +5,8 @@ import './App.css'
 import Login from './components/Login/Login'
 import Register from './components/Login/Register'
 import Home from './components/pages/Home'
-import { Footer, Header } from './components'
+import { Footer, Header, ProtectedRoute } from './components'
+import CreateProduct from './components/Products/ProductCreate'
 
 function App() {
   
@@ -17,6 +18,14 @@ function App() {
         <Route path='/' element={<Home />} />
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<Register />} />
+        <Route 
+          path='/createproduct'
+          element={
+            <ProtectedRoute>
+              <CreateProduct/>
+            </ProtectedRoute>
+          }
+          />
       </Routes>
       <Footer />
     </BrowserRouter>
