@@ -1,7 +1,7 @@
 // src/pages/ProductDetails.jsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchProduct } from "./ProductService";
+import { fetchProduct, deleteProduct } from "./ProductService";
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -17,6 +17,8 @@ export default function ProductDetails() {
       try {
         setLoading(true);
         const data = await fetchProduct(id);
+        //console.log(data);
+        
         setProduct(data);
         setError(null);
       } catch (err) {
@@ -28,6 +30,8 @@ export default function ProductDetails() {
     };
     loadProduct();
   }, [id]);
+
+
 
   if (loading) {
     return (
@@ -222,6 +226,12 @@ export default function ProductDetails() {
                     </svg>
                     30-day returns
                   </div>
+                    <button
+                onClick={() => deleteProduct(product._id)}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all"
+                 >
+                  Delete
+                </button>
                 </div>
               </div>
             </div>

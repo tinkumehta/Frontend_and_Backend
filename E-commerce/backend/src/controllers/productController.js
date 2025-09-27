@@ -157,21 +157,27 @@ export const updateProduct = async(req, res, next) => {
 
 // delete product
 export const deleteProduct = async (req, res, next) => {
-    try {
-        const product = await Product.findById(req.params.id);
+  try {
+    const product = await Product.findById(req.params.id);
 
-        if (product) {
-            // delete image from cloudinary
-            for (const image of product.images){
-                await cloudinary.uploader.destroy(image.public_id);
-            }
-
-            await Product.deleteOne({ _id : req.params.id});
-            res.json({message : 'Product removed'});
-        } else {
-            res.status(404).json({message : 'Product not found'});
-        }
-    } catch (error) {
-        next(error)
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
     }
+
+    // ✅ Check if logged-in user is the creator
+    if (product.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "You are not authorized to delete this product" });
+    }
+
+    // ✅ Delete images from Cloudinary
+    for (const image of product.images) {
+      await cloudinary.uploader.destroy(image.public_id);
+    }
+
+    await Product.deleteOne({ _id: req.params.id });
+
+    res.json({ message: "Product removed successfully" });
+  } catch (error) {
+    next(error);
+  }
 };
