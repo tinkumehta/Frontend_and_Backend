@@ -7,6 +7,7 @@ import Register from './components/Login/Register'
 
 import { Footer, Header, ProtectedRoute, ProductDetails, Products } from './components'
 import CreateProduct from './components/Products/ProductCreate'
+import TopRatedProducts from './components/review/TopReview'
 
 
 function App() {
@@ -33,6 +34,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CreateProduct/>
+            </ProtectedRoute>
+          }
+          />
+        <Route 
+          path='/productReview'
+          element={
+            <ProtectedRoute>
+              <TopRatedProducts/>
             </ProtectedRoute>
           }
           />

@@ -1,7 +1,8 @@
 // src/pages/ProductDetails.jsx
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { fetchProduct, deleteProduct } from "./ProductService";
+import Review from "../review/Review";
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -233,7 +234,9 @@ export default function ProductDetails() {
                   Delete
                 </button>
                 </div>
+                <Link to="/productReview">Review</Link>
               </div>
+              <Review id={product._id} />
             </div>
           </div>
         </div>
