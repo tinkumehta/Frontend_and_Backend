@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { fetchProduct, deleteProduct } from "./ProductService";
 import Review from "../review/Review";
+import GetReview from "../review/GetReview";
+
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -227,14 +229,17 @@ export default function ProductDetails() {
                     </svg>
                     30-day returns
                   </div>
-                    <button
+                  
+                  
+                </div>
+                <GetReview productId={product._id} />
+                  <button
                 onClick={() => deleteProduct(product._id)}
                 className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all"
                  >
                   Delete
                 </button>
-                </div>
-                <Link to="/productReview">Review</Link>
+                {/* <Link to="/productReview">Review</Link> */}
               </div>
               <Review id={product._id} />
             </div>

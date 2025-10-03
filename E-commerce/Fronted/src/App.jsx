@@ -8,6 +8,7 @@ import Register from './components/Login/Register'
 import { Footer, Header, ProtectedRoute, ProductDetails, Products } from './components'
 import CreateProduct from './components/Products/ProductCreate'
 import TopRatedProducts from './components/review/TopReview'
+import CheckoutPage from './components/payment/CreatePayment'
 
 
 function App() {
@@ -42,6 +43,14 @@ function App() {
           element={
             <ProtectedRoute>
               <TopRatedProducts/>
+            </ProtectedRoute>
+          }
+          />
+        <Route 
+          path='/create-payment'
+          element={
+            <ProtectedRoute>
+              <CheckoutPage/>
             </ProtectedRoute>
           }
           />

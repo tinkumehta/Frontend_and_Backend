@@ -17,7 +17,7 @@ export default function TopRatedProducts() {
           },
         });
         setTopProducts(res.data);
-        console.log(res.data);
+      //  console.log(res.data);
         
       } catch (err) {
         setError("Failed to load top-rated products.");
