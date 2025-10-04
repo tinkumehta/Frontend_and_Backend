@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { fetchProduct, deleteProduct } from "./ProductService";
 import Review from "../review/Review";
 import GetReview from "../review/GetReview";
+import Payment from "../payment/CreatePayment";
 
 
 export default function ProductDetails() {
@@ -137,7 +138,7 @@ export default function ProductDetails() {
                       <img
                         src={image.url}
                         alt={`${product.name} ${index + 1}`}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                       />
                     </button>
                   ))}
@@ -233,6 +234,10 @@ export default function ProductDetails() {
                   
                 </div>
                 <GetReview productId={product._id} />
+                <Payment 
+                    product={product}
+                    quantity={quantity}
+                />
                   <button
                 onClick={() => deleteProduct(product._id)}
                 className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all"

@@ -1,67 +1,87 @@
-import React, { useState } from "react";
+import { useContext, useState } from "react";
 import axios from "axios";
+import { AuthContext } from "../../context/AuthContext";
 
-const CheckoutPage = () => {
+export default function Payment({ product, quantity }) {
+  const {user} = useContext(AuthContext);
+  const [address, setAddress] = useState({
+    address: "",
+    city: "",
+    postalCode: "",
+    country: "",
+  });
   const [loading, setLoading] = useState(false);
+  const token = localStorage.getItem("token");
 
-  const handleCheckout = async () => {
+  //console.log(user);
+  
+  // Handle address form input
+  const handleChange = (e) => {
+    setAddress({ ...address, [e.target.name]: e.target.value });
+  };
+
+  const handlePayment = async () => {
     try {
+      if (!product) {
+        alert("Product details not found!");
+        return;
+      }
+
+      // Basic form validation
+      if (!address.address || !address.city || !address.postalCode || !address.country) {
+        alert("Please fill all shipping fields!");
+        return;
+      }
+
       setLoading(true);
 
-      // ✅ Call backend to create order
-      const { data } = await axios.post(
-        "/api/payments/create-order", // Your backend order route
-        {
-          items: [
-            {
-              name: "T-shirt",
-              quantity: 1,
-              price: 250,
-              product: "68d790ae545d4fa95b013a9e",
-              image:
-                "https://res.cloudinary.com/dkk3julf0/image/upload/v1758958261/products/um41x7tcoo4xtdcjf43v.jpg",
-            },
-          ],
-          shippingAddress: {
-            address: "01 AshokNagar",
-            city: "Barkagaon",
-            postalCode: "825311",
-            country: "India",
+      const orderData = {
+        items: [
+          {
+            name: product.name,
+            quantity: quantity || 1,
+            price: product.price,
+            image: product.image || product.images?.[0]?.url,
+            product: product._id,
           },
-          itemsPrice: 250,
-          taxPrice: 15,
-          shippingPrice: 10,
-          totalAmount: 275,
-          currency: "INR",
+        ],
+        shippingAddress: address,
+        itemsPrice: product.price * (quantity),
+        taxPrice: 15,
+        shippingPrice: 10,
+        totalAmount: product.price * (quantity || 1) + 25,
+        currency: "INR",
+      };
+
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`, // ✅ Auth token if required
-            "Content-Type": "application/json",
-          },
-        }
+      };
+
+      // Create Razorpay order
+      const { data } = await axios.post(
+        "/api/payments/create-order",
+        orderData,
+        config
       );
 
-      // ✅ Razorpay order data from backend
-      const { razorpayOrder } = data;
-
+      // Razorpay payment options
       const options = {
-        key: razorpayOrder.key, // ✅ from backend
-        amount: razorpayOrder.amount, // in paise
-        currency: razorpayOrder.currency,
-        name: "My Shop",
-        description: "Order Payment",
-        image:
-          "https://upload.wikimedia.org/wikipedia/commons/7/72/Razorpay_logo.svg",
-        order_id: razorpayOrder.id,
+        key: data.razorpayOrder.key,
+        amount: data.razorpayOrder.amount,
+        currency: data.razorpayOrder.currency,
+        name: "Shop my side",
+        description: `Payment for ${product.name}`,
+        order_id: data.razorpayOrder.id,
         handler: function (response) {
-          alert("Payment successful!");
-          console.log("Payment Response:", response);
-          // ✅ You can send response to backend for verification
+          alert("✅ Payment successful!");
+         // console.log("Payment Details:", response);
         },
         prefill: {
-          name: "Tinku Kumar",
-          email: "tinku@example.com",
+          name: user.name,
+          email: user.email || 'aaa@gmail.com',
           contact: "9999999999",
         },
         theme: {
@@ -69,32 +89,74 @@ const CheckoutPage = () => {
         },
       };
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
     } catch (error) {
-      console.error("Checkout error:", error);
-      alert("Something went wrong!");
+      console.error("Payment Error:", error);
+      alert("Error creating order or opening Razorpay!");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white shadow-md p-6 rounded-lg text-center">
-        <h1 className="text-2xl font-bold mb-4">Checkout</h1>
-        <p className="mb-2">Product: <b>T-shirt</b></p>
-        <p className="mb-2">Total Price: <b>₹275</b></p>
-        <button
-          onClick={handleCheckout}
-          disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? "Processing..." : "Pay with Razorpay"}
-        </button>
-      </div>
+    <div className="max-w-lg mx-auto bg-white shadow-md rounded-lg p-6 mt-10">
+      <h2 className="text-2xl font-bold mb-4 text-center">Payment Details</h2>
+
+      {/* Product Info */}
+      {product && (
+        <div className="mb-4 border-b pb-3">
+          <h3 className="text-xl font-semibold">{product.name}</h3>
+          <p className="text-gray-600">Price: ₹{product.price}</p>
+          <p>Quantity: {product.quantity || 1}</p>
+          <p className="font-medium text-blue-600">
+            Total: ₹{product.price * (product.quantity || 1) + 5}
+          </p>
+        </div>
+      )}
+
+      {/* Shipping Address Form */}
+      <h3 className="text-lg font-semibold mb-2">Shipping Address</h3>
+      <input
+        type="text"
+        name="address"
+        placeholder="Address"
+        value={address.address}
+        onChange={handleChange}
+        className="border p-2 w-full mb-3 rounded"
+      />
+      <input
+        type="text"
+        name="city"
+        placeholder="City"
+        value={address.city}
+        onChange={handleChange}
+        className="border p-2 w-full mb-3 rounded"
+      />
+      <input
+        type="text"
+        name="postalCode"
+        placeholder="Postal Code"
+        value={address.postalCode}
+        onChange={handleChange}
+        className="border p-2 w-full mb-3 rounded"
+      />
+      <input
+        type="text"
+        name="country"
+        placeholder="Country"
+        value={address.country}
+        onChange={handleChange}
+        className="border p-2 w-full mb-3 rounded"
+      />
+
+      <button
+        onClick={handlePayment}
+        disabled={loading}
+        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all w-full"
+      >
+        {loading ? "Processing..." : "Pay Now"}
+      </button>
     </div>
   );
-};
-
-export default CheckoutPage;
+}

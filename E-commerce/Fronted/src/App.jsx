@@ -47,7 +47,7 @@ function App() {
           }
           />
         <Route 
-          path='/create-payment'
+          path='/p'
           element={
             <ProtectedRoute>
               <CheckoutPage/>
