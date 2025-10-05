@@ -23,5 +23,5 @@ import {protect} from '../middleware/auth.js'
 //create-payment-link
  router.route('/create-payment-link').post(protect, createPaymentLink);
  // test-payment-verification
-router.route('/test-payment-verify').post(protect, testPaymentVerification);
+router.route('/v').post(protect, testPaymentVerification);
  export default router;

@@ -73,9 +73,22 @@ export default function Payment({ product, quantity }) {
         amount: data.razorpayOrder.amount,
         currency: data.razorpayOrder.currency,
         name: "Shop my side",
-        description: `Payment for ${product.name}`,
+        description: ` ${product.name}`,
         order_id: data.razorpayOrder.id,
-        handler: function (response) {
+        handler: async function (response) {
+          // razorpay returns success data
+          const verifyRes = await axios.post(
+            `/api/payments/v`,
+            {
+              orderId: order._id,
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature
+            },
+             {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        }
+          );
           alert("✅ Payment successful!");
          // console.log("Payment Details:", response);
         },
