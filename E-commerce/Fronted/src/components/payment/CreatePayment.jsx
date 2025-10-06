@@ -66,6 +66,8 @@ export default function Payment({ product, quantity }) {
         orderData,
         config
       );
+     // console.log(data);
+      
 
       // Razorpay payment options
       const options = {
@@ -81,9 +83,7 @@ export default function Payment({ product, quantity }) {
             `/api/payments/v`,
             {
               orderId: order._id,
-          razorpay_order_id: response.razorpay_order_id,
-          razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_signature: response.razorpay_signature
+        
             },
              {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }

@@ -9,6 +9,7 @@ import { Footer, Header, ProtectedRoute, ProductDetails, Products } from './comp
 import CreateProduct from './components/Products/ProductCreate'
 import TopRatedProducts from './components/review/TopReview'
 import CheckoutPage from './components/payment/CreatePayment'
+import Profile from './components/pages/Profile'
 
 
 function App() {
@@ -51,6 +52,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CheckoutPage/>
+            </ProtectedRoute>
+          }
+          />
+        <Route 
+          path='/profile'
+          element={
+            <ProtectedRoute>
+              <Profile/>
             </ProtectedRoute>
           }
           />
