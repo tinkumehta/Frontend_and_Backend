@@ -1,10 +1,14 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "hair-queue-backend/\r ├─ package.json\r ├─ .env.example\r ├─ server.js\r ├─ src/\r │  ├─ config/\r │  │  └─ db.js\r │  ├─ models/\r │  │  ├─ User.js\r │  │  ├─ Shop.js\r │  │  ├─ Barber.js\r │  │  └─ QueueEntry.js\r │  ├─ controllers/\r │  │  ├─ authController.js\r │  │  ├─ shopController.js\r │  │  ├─ barberController.js\r │  │  └─ queueController.js\r │  ├─ routes/\r │  │  ├─ authRoutes.js\r │  │  ├─ shopRoutes.js\r │  │  ├─ barberRoutes.js\r │  │  └─ queueRoutes.js\r │  ├─ middleware/\r │  │  └─ auth.js\r │  ├─ utils/\r │  │  └─ calcETA.js\r │  └─ sockets/\r │     └─ queueSocket.js\r └─ scripts/\r    └─ seed.js",
-  "main": "index.js",
+  "description": "hair-queue-backen",
+  "type": "module",
+  "main": "src/server.js",
+  
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -15,9 +19,11 @@
     "dotenv": "^17.2.3",
     "express": "^4.22.1",
     "express-async-errors": "^3.1.1",
+    "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.1",
+    "multer": "^2.0.2",
     "nodemon": "^3.1.11",
     "socket.io": "^4.8.1",
     "uuid": "^13.0.0"

@@ -4,49 +4,27 @@ import bcrypt from 'bcryptjs';
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Please provide a name'],
-    trim: true,
-    maxlength: [50, 'Name cannot exceed 50 characters']
+    required: true,
+    trim: true
   },
   email: {
     type: String,
-    required: [true, 'Please provide an email'],
+    required: true,
     unique: true,
-    lowercase: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email']
-  },
-  phone: {
-    type: String,
-    required: [true, 'Please provide a phone number'],
-    match: [/^[0-9]{10,15}$/, 'Please provide a valid phone number']
+    lowercase: true
   },
   password: {
     type: String,
-    required: [true, 'Please provide a password'],
-    minlength: [6, 'Password must be at least 6 characters'],
-    select: false
+    required: true,
+    minlength: 6
   },
   role: {
     type: String,
     enum: ['user', 'barber', 'shop_owner', 'admin'],
     default: 'user'
   },
-  profilePhoto: {
-    type: String,
-    default: 'default_avatar.jpg'
-  },
-  isVerified: {
-    type: Boolean,
-    default: false
-  },
-  fcmToken: {
-    type: String
-  },
+  phone: String,
   createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
     type: Date,
     default: Date.now
   }
@@ -66,14 +44,8 @@ userSchema.pre('save', async function(next) {
 });
 
 // Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+userSchema.methods.comparePassword = async function(password) {
+  return await bcrypt.compare(password, this.password);
 };
-
-// Update timestamp on save
-userSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
 
 export default mongoose.model('User', userSchema);

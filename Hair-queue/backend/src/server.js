@@ -1,136 +1,175 @@
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
-import helmet from 'helmet';
-import http from 'http';
-import { Server } from 'socket.io';
-import connectDB from './config/database.js';
-import errorHandler from './middleware/errorHandler.js';
+import dotenv from 'dotenv';
 
-// Route imports
-import authRoutes from './routes/auth.js';
-import queueRoutes from './routes/queues.js';
-import shopRoutes from './routes/shops.js';
-
-// Load env vars
 dotenv.config();
 
-// Connect to database
-connectDB();
-
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true
-  }
-});
 
-// Security middleware
-app.use(helmet());
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
-import rateLimit from 'express-rate-limit';
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+// ✅ HEALTH CHECK - This will work!
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    success: true, 
+    message: '✅ Server is running perfectly!',
+    timestamp: new Date().toISOString()
+  });
 });
-app.use('/api/', limiter);
 
-// Socket.io connection handling
-const activeConnections = new Map();
-
-io.on('connection', (socket) => {
-  console.log('New client connected:', socket.id);
-
-  // Join shop room for real-time updates
-  socket.on('join-shop', (shopId) => {
-    socket.join(`shop-${shopId}`);
-    console.log(`Socket ${socket.id} joined shop-${shopId}`);
-  });
-
-  // Leave shop room
-  socket.on('leave-shop', (shopId) => {
-    socket.leave(`shop-${shopId}`);
-    console.log(`Socket ${socket.id} left shop-${shopId}`);
-  });
-
-  // Handle customer joining queue
-  socket.on('customer-joined', (data) => {
-    const { shopId, customerId, position } = data;
-    io.to(`shop-${shopId}`).emit('queue-updated', {
-      type: 'customer_joined',
-      customerId,
-      position,
-      timestamp: new Date()
+// ✅ TEST AUTH ROUTES
+app.post('/api/auth/register', (req, res) => {
+  const { name, email, password } = req.body;
+  
+  if (!name || !email || !password) {
+    return res.status(400).json({
+      success: false,
+      error: 'Please provide name, email and password'
     });
+  }
+  
+  res.status(201).json({
+    success: true,
+    message: 'User registered successfully',
+    user: { name, email, id: '123' }
   });
+});
 
-  // Handle barber calling next customer
-  socket.on('next-customer', (data) => {
-    const { shopId, barberId } = data;
-    io.to(`shop-${shopId}`).emit('queue-updated', {
-      type: 'next_customer',
-      barberId,
-      timestamp: new Date()
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      error: 'Please provide email and password'
     });
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
-    // Clean up connection tracking
-    for (const [key, value] of activeConnections.entries()) {
-      if (value === socket.id) {
-        activeConnections.delete(key);
-      }
+  }
+  
+  res.status(200).json({
+    success: true,
+    token: 'jwt_token_here_123',
+    user: { 
+      id: '123', 
+      name: 'Test User', 
+      email,
+      role: 'user'
     }
   });
 });
 
-// Make io accessible to routes
-app.set('io', io);
-
-// Mount routers
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/queues', queueRoutes);
-app.use('/api/v1/shops', shopRoutes);
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
+// ✅ TEST SHOP ROUTES
+app.get('/api/shops', (req, res) => {
+  const shops = [
+    {
+      id: '1',
+      name: 'Modern Cuts Barbershop',
+      address: '123 Main St, New York',
+      phone: '212-555-1234',
+      averageWaitTime: 20,
+      services: [
+        { name: 'Haircut', price: 25, duration: 30 }
+      ]
+    },
+    {
+      id: '2',
+      name: 'Classic Barbers',
+      address: '456 Oak Ave, Brooklyn',
+      phone: '718-555-5678',
+      averageWaitTime: 15,
+      services: [
+        { name: 'Standard Haircut', price: 20, duration: 25 }
+      ]
+    }
+  ];
+  
+  res.json({
     success: true,
-    message: 'Server is running',
-    timestamp: new Date(),
-    uptime: process.uptime()
+    count: shops.length,
+    data: shops
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Route not found'
+app.get('/api/shops/:id', (req, res) => {
+  const shopId = req.params.id;
+  
+  res.json({
+    success: true,
+    data: {
+      id: shopId,
+      name: 'Modern Cuts Barbershop',
+      address: '123 Main St, New York',
+      phone: '212-555-1234',
+      services: [
+        { name: 'Haircut', price: 25, duration: 30 }
+      ]
+    }
   });
 });
 
-// Error handler (must be last)
-app.use(errorHandler);
+// ✅ TEST QUEUE ROUTES (with mock auth)
+const mockAuth = (req, res, next) => {
+  const token = req.headers.authorization;
+  
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      error: 'No token provided'
+    });
+  }
+  
+  // Mock user
+  req.user = { id: '123', name: 'Test User' };
+  next();
+};
 
+app.post('/api/queues/join', mockAuth, (req, res) => {
+  const { shopId, service } = req.body;
+  
+  if (!shopId || !service) {
+    return res.status(400).json({
+      success: false,
+      error: 'Please provide shopId and service'
+    });
+  }
+  
+  res.status(201).json({
+    success: true,
+    message: 'Joined queue successfully',
+    data: {
+      id: 'queue_123',
+      shopId,
+      customer: req.user.id,
+      service,
+      position: 3,
+      estimatedWait: 45,
+      status: 'waiting'
+    }
+  });
+});
+
+app.get('/api/queues/me', mockAuth, (req, res) => {
+  res.json({
+    success: true,
+    data: [
+      {
+        id: 'queue_123',
+        shop: { id: '1', name: 'Modern Cuts' },
+        position: 3,
+        estimatedWait: 45,
+        status: 'waiting'
+      }
+    ]
+  });
+});
+
+// Start server
 const PORT = process.env.PORT || 5000;
-
-server.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`✅ Test these endpoints:`);
+  console.log(`   GET  http://localhost:${PORT}/api/health`);
+  console.log(`   GET  http://localhost:${PORT}/api/shops`);
+  console.log(`   POST http://localhost:${PORT}/api/auth/register`);
 });
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  console.log(`Error: ${err.message}`);
-  // Close server & exit process
-  server.close(() => process.exit(1));
-});
-
-export { io };
