@@ -38,24 +38,33 @@ const registerUser = asyncHandler (async (req, res) => {
         throw new ApiError(400, "your field is empyt")
     }
 
-    const existedUser = await User.findOne({email});
+    const existedUser = await User.findOne({
+        $or : [{username}, {email}]
+    });
     if (existedUser) {
         throw new ApiError(400, 'User is already exists')
     }
-    const avatarLocalPath = req.files?.avatar[0]?.path;
+    // const avatarLocalPath = req.files?.avatar[0]?.path;
 
-    if (!avatarLocalPath){
-        throw new ApiError(400, "Avatar file is missing")
+    // if (!avatarLocalPath){
+    //     throw new ApiError(400, "Avatar file is missing")
+    // }
+    // const avatar = await uploadOnCloudinary(avatarLocalPath)
+    // if (!avatar) {
+    //     throw new ApiError(404, "Avatar file uploa failed")
+    // }
+    let avatarImageLocalPath;
+    if (req.files && Array.isArray(req.files.avatar) && req.files.avatar.length > 0){
+        avatarImageLocalPath = req.files.avatar[0].path
     }
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
-    if (!avatar) {
-        throw new ApiError(404, "Avatar file uploa failed")
-    }
+
+    const avatar = await uploadOnCloudinary(avatarImageLocalPath);
 
     const user = await User.create({
         fullName,
         email,
         username,
+        avatar: avatar?.url || "",
         password,
         phone,
         role: role || 'user',
@@ -75,11 +84,13 @@ const registerUser = asyncHandler (async (req, res) => {
 });
 
 const loginUser = asyncHandler (async (req, res) => {
-    const {email, password} = req.body;
-    if (!email){
-        throw new ApiError(400, "email is required")
+    const {email, username, password} = req.body;
+    if ( !(username) &&  !(email)){
+        throw new ApiError(400, "email or username is required")
     }
-    const user = await User.findOne({email})
+    const user = await User.findOne({
+        $or : [{email}, {username}]
+    })
     if (!user) {
         throw new ApiError(400, "User is not register")
     }
@@ -108,7 +119,7 @@ const loginUser = asyncHandler (async (req, res) => {
 })
 
 const logoutUser = asyncHandler (async (req, res) => {
-    await User.findById(
+    await User.findByIdAndUpdate(
         req.user._id,
         {
             $set: {
@@ -127,8 +138,8 @@ const logoutUser = asyncHandler (async (req, res) => {
 
     return res
     .status(201)
-    .cookie("accessToken", options)
-    .cookie("refreshToken", options)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
     .json( new ApiResponse(201, {}, "User logged out")
     )
 })

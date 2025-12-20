@@ -25,7 +25,11 @@ const userSchema = new Schema(
       type: String,
       required: true,
       minlength: 8,
-      select: false
+      
+    },
+    avatar: {
+        type : String, // cloudinary url
+        
     },
     role: {
       type: String,
@@ -42,9 +46,6 @@ const userSchema = new Schema(
   { timestamps: true }
 );
 
-//
-// ✅ CORRECT async middleware (NO next)
-//
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
 
@@ -52,12 +53,11 @@ userSchema.pre('save', async function () {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-//
-// ✅ Instance methods
-//
+
 userSchema.methods.isPasswordCorrect = async function (password) {
-  return bcrypt.compare(password, this.password);
-};
+    return await bcrypt.compare(password, this.password)
+}
+
 
 userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
@@ -72,6 +72,7 @@ userSchema.methods.generateAccessToken = function () {
     }
   );
 };
+//console.log(process.env.ACCESS_TOKEN_SECRET , "Hello");
 
 userSchema.methods.generateRefreshToken = function () {
   return jwt.sign(

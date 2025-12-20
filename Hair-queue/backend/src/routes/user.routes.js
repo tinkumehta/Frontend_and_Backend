@@ -23,7 +23,7 @@ import {
 
  router.route("/login").post(upload.none(), loginUser)
  router.route("/logout").post(verfiyJWT, logoutUser)
- router.route("/change-password").post(verfiyJWT, changePassword)
- router.route("/current-user").get(verfiyJWT, getUser)
+ router.route("/change-password").post(upload.none(),verfiyJWT, changePassword)
+ router.route("/current-user").get( verfiyJWT,  getUser)
 
  export default router;
