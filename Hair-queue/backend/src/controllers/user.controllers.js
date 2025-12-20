@@ -31,10 +31,10 @@ const registerUser = asyncHandler (async (req, res) => {
     // check for user creation
     // return res
 
-    const {fullName, email, password, role, phone} = req.body;
+    const {fullName, email, password, role, phone, username} = req.body;
 
     if (
-        [fullName, email, password, role, phone].some((field) => field?.trim() === "")) {
+        [fullName,username, email, password, role, phone].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "your field is empyt")
     }
 
@@ -55,6 +55,7 @@ const registerUser = asyncHandler (async (req, res) => {
     const user = await User.create({
         fullName,
         email,
+        username,
         password,
         phone,
         role: role || 'user',
