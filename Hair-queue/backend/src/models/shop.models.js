@@ -1,6 +1,16 @@
 import mongoose, {Schema} from 'mongoose'
 
 
+const serviceSchema = new Schema(
+  {
+    name: { type: String, required: true },
+    price: { type: Number, required: true },
+    duration: { type: Number, required: true } // minutes
+  },
+  { _id: false }
+);
+
+
 const shopSchema = new Schema (
     {
         name : {
@@ -19,12 +29,19 @@ const shopSchema = new Schema (
             state : String,
             country : String
         },
-        phone : String,
-        services : [{
-            name : String,
-            price : Number,
-            duration : Number
-        }],
+        location: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point'
+      },
+      coordinates: {
+        type: [Number], // [longitude, latitude]
+        required: true
+      }
+    },
+        phone : Number,
+       services: [serviceSchema],
         isActive : {
             type : Boolean,
             default : true
@@ -33,14 +50,14 @@ const shopSchema = new Schema (
                 type : Number,
                 default : 15
             },
-            createdAt: {
-                type : Date,
-                default : Date.now
-            }
+           
     },
     {
         timestamps : true
     }
 )
+
+// Required for geo queries
+shopSchema.index({location : '2dsphere'});
 
 export default mongoose.model('Shop', shopSchema);
