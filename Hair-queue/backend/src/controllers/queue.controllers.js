@@ -99,7 +99,7 @@ export const nextCustomer = asyncHandler(async (req, res) => {
 
   // Only shop owner (or authorized barber logic) should do this.
   const shop = await Shop.findOne({
-    shop: shopId,
+    _id : shopId,
     owner : userId
   });
 
