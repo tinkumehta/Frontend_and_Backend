@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import api from './api';
+import { authService } from '../services/auth.service';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext({});
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(true);
           
           // Optional: Validate token with backend
-          await api.get('/users/current-user');
+          await authService.getCurrentUser();
         } catch (error) {
           // Token invalid or expired
           logout();
@@ -44,13 +44,13 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Register user
-  const register = async (userData) => {
+  const register = async (formData) => {
     try {
       setLoading(true);
-      const response = await api.post('/users/register', userData);
+      const response = await authService.register(formData);
       
-      if (response.data.success) {
-        const { accessToken, refreshToken, user } = response.data;
+      if (response.success) {
+        const { accessToken, refreshToken, user } = response.data || response;
         
         // Store tokens and user info
         localStorage.setItem('accessToken', accessToken);
@@ -75,10 +75,10 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       setLoading(true);
-      const response = await api.post('/users/login', credentials);
+      const response = await authService.login(credentials);
       
-      if (response.data.success) {
-        const { accessToken, refreshToken, user } = response.data;
+      if (response.success) {
+        const { accessToken, refreshToken, user } = response.data || response;
         
         // Store tokens and user info
         localStorage.setItem('accessToken', accessToken);
@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
   // Logout user
   const logout = async () => {
     try {
-      await api.post('/users/logout');
+      await authService.logout();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -122,8 +122,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-
-
   // Check if user has specific role
   const hasRole = (role) => {
     if (!user) return false;
@@ -137,7 +135,6 @@ export const AuthProvider = ({ children }) => {
     register,
     login,
     logout,
-  
     hasRole
   };
 

@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { shopService } from '../shop/shop.service';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { shopService } from './shop.service';
+import { useAuth } from '../../context/AuthContext'
+import { FaMapMarkerAlt, FaPhone, FaPlus, FaTrash, FaLocationArrow } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 const CreateShop = () => {
+  const { id } = useParams(); // For edit mode
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -13,7 +18,7 @@ const CreateShop = () => {
       street: '',
       city: '',
       state: '',
-      country: 'India'
+      country: 'USA'
     },
     services: [
       { name: 'Haircut', price: 25, duration: 30 },
@@ -22,6 +27,43 @@ const CreateShop = () => {
     longitude: '',
     latitude: ''
   });
+
+  // Check if we're in edit mode
+  useEffect(() => {
+    if (id && user?.role === 'barber') {
+      setIsEditMode(true);
+      fetchShopDetails();
+    }
+  }, [id, user]);
+
+  const fetchShopDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await shopService.getShopById(id);
+      if (response.success) {
+        const shop = response.data;
+        setFormData({
+          name: shop.name || '',
+          phone: shop.phone || '',
+          address: {
+            street: shop.address?.street || '',
+            city: shop.address?.city || '',
+            state: shop.address?.state || '',
+            country: shop.address?.country || 'USA'
+          },
+          services: shop.services || [],
+          longitude: shop.location?.coordinates?.[0] || '',
+          latitude: shop.location?.coordinates?.[1] || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching shop:', error);
+      toast.error('Failed to load shop details');
+      navigate('/shops');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -45,7 +87,7 @@ const CreateShop = () => {
 
   const handleServiceChange = (index, field, value) => {
     const updatedServices = [...formData.services];
-    updatedServices[index][field] = field === 'price' || field === 'duration' ? parseFloat(value) : value;
+    updatedServices[index][field] = field === 'price' || field === 'duration' ? parseFloat(value) || 0 : value;
     
     setFormData(prev => ({
       ...prev,
@@ -74,6 +116,7 @@ const CreateShop = () => {
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
+      toast.loading('Getting your location...');
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setFormData(prev => ({
@@ -104,15 +147,25 @@ const CreateShop = () => {
       return false;
     }
     
-    if (!formData.address.street.trim() || !formData.address.city.trim()) {
-      toast.error('Street and city are required');
+    if (!formData.address.street.trim()) {
+      toast.error('Street address is required');
+      return false;
+    }
+    
+    if (!formData.address.city.trim()) {
+      toast.error('City is required');
       return false;
     }
     
     // Validate services
     for (const service of formData.services) {
-      if (!service.name.trim() || !service.price) {
-        toast.error('All services must have a name and price');
+      if (!service.name.trim()) {
+        toast.error('Service name is required');
+        return false;
+      }
+      
+      if (!service.price || service.price <= 0) {
+        toast.error('Service price must be greater than 0');
         return false;
       }
     }
@@ -128,19 +181,34 @@ const CreateShop = () => {
     setLoading(true);
     
     try {
-      const response = await shopService.createShop(formData);
-      
-      if (response.success) {
-        toast.success('Shop created successfully!');
-        navigate('/shops');
+      if (isEditMode) {
+        const response = await shopService.updateShop(id, formData);
+        if (response.success) {
+          toast.success('Shop updated successfully!');
+          navigate(`/shops/${id}`);
+        }
+      } else {
+        const response = await shopService.createShop(formData);
+        if (response.success) {
+          toast.success('Shop created successfully!');
+          navigate('/shops');
+        }
       }
     } catch (error) {
-      console.error('Error creating shop:', error);
-      toast.error(error.response?.data?.message || 'Failed to create shop');
+      console.error('Error saving shop:', error);
+      toast.error(error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} shop`);
     } finally {
       setLoading(false);
     }
   };
+
+  if (loading && isEditMode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -149,8 +217,12 @@ const CreateShop = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Create Your Barbershop</h1>
-              <p className="text-gray-600 mt-2">Set up your shop to start accepting customers</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {isEditMode ? 'Edit Barbershop' : 'Create Your Barbershop'}
+              </h1>
+              <p className="text-gray-600 mt-2">
+                {isEditMode ? 'Update your shop information' : 'Set up your shop to start accepting customers'}
+              </p>
             </div>
             <button
               onClick={() => navigate('/shops')}
@@ -161,7 +233,7 @@ const CreateShop = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
           <form onSubmit={handleSubmit} className="p-6">
             {/* Basic Information */}
             <div className="mb-8">
@@ -187,15 +259,18 @@ const CreateShop = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Phone Number *
                   </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="(123) 456-7890"
-                  />
+                  <div className="relative">
+                    <FaPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <input
+                      type="tel"
+                      name="phone"
+                      required
+                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="(123) 456-7890"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -209,15 +284,18 @@ const CreateShop = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Street Address *
                   </label>
-                  <input
-                    type="text"
-                    name="address.street"
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                    value={formData.address.street}
-                    onChange={handleChange}
-                    placeholder="123 Main Street"
-                  />
+                  <div className="relative">
+                    <FaMapMarkerAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <input
+                      type="text"
+                      name="address.street"
+                      required
+                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                      value={formData.address.street}
+                      onChange={handleChange}
+                      placeholder="123 Main Street"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -311,8 +389,9 @@ const CreateShop = () => {
                   <button
                     type="button"
                     onClick={getCurrentLocation}
-                    className="w-full px-4 py-3 bg-green-100 text-green-700 font-medium rounded-lg hover:bg-green-200 transition"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-100 text-green-700 font-medium rounded-lg hover:bg-green-200 transition"
                   >
+                    <FaLocationArrow className="h-5 w-5" />
                     Use Current Location
                   </button>
                 </div>
@@ -326,9 +405,10 @@ const CreateShop = () => {
                 <button
                   type="button"
                   onClick={addService}
-                  className="px-4 py-2 bg-blue-100 text-blue-700 font-medium rounded-lg hover:bg-blue-200 transition"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 font-medium rounded-lg hover:bg-blue-200 transition"
                 >
-                  + Add Service
+                  <FaPlus className="h-4 w-4" />
+                  Add Service
                 </button>
               </div>
               
@@ -341,8 +421,9 @@ const CreateShop = () => {
                         <button
                           type="button"
                           onClick={() => removeService(index)}
-                          className="text-red-600 hover:text-red-800"
+                          className="flex items-center gap-2 text-red-600 hover:text-red-800"
                         >
+                          <FaTrash className="h-4 w-4" />
                           Remove
                         </button>
                       )}
@@ -418,9 +499,9 @@ const CreateShop = () => {
                   {loading ? (
                     <span className="flex items-center gap-2">
                       <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-                      Creating Shop...
+                      {isEditMode ? 'Updating Shop...' : 'Creating Shop...'}
                     </span>
-                  ) : 'Create Shop'}
+                  ) : isEditMode ? 'Update Shop' : 'Create Shop'}
                 </button>
               </div>
             </div>

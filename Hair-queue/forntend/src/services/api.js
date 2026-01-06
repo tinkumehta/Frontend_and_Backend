@@ -3,6 +3,8 @@ import toast from 'react-hot-toast';
 
 const API_BASE_URL =  'http://localhost:5000/api/v1';
 
+console.log('API Base URL:', API_BASE_URL); // Debug log
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -14,22 +16,35 @@ const api = axios.create({
 // Request interceptor to add token
 api.interceptors.request.use(
   (config) => {
+    console.log(`Making ${config.method.toUpperCase()} request to:`, config.url); // Debug log
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Token added to request'); // Debug log
     }
     return config;
   },
   (error) => {
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`Response from ${response.config.url}:`, response.status); // Debug log
+    return response;
+  },
   (error) => {
     const { response } = error;
+    
+    console.error('API Error:', {
+      url: error.config?.url,
+      status: response?.status,
+      data: response?.data,
+      message: error.message
+    }); // Debug log
     
     if (response) {
       switch (response.status) {
@@ -48,7 +63,7 @@ api.interceptors.response.use(
           break;
         
         case 404:
-          toast.error('Resource not found.');
+          toast.error(`Resource not found: ${error.config?.url}`);
           break;
         
         case 500:
