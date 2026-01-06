@@ -9,6 +9,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
 import Queue from './pages/Queue';
+import CreateShop from './pages/shop/CreateShop';
+import ShopList from './pages/shop/ShopList';
+
 
 function App() {
  
@@ -22,7 +25,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route
             path="/"
-            element={<ProtectedRoute><Home /></ProtectedRoute>}
+            element={<ProtectedRoute><ShopList /></ProtectedRoute>}
           />
           <Route
             path="/queue/:shopId"

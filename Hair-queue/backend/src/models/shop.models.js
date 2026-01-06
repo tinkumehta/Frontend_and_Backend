@@ -1,63 +1,56 @@
+// shop.models.js
 import mongoose, {Schema} from 'mongoose'
 
-
-const serviceSchema = new Schema(
-  {
-    name: { type: String, required: true },
-    price: { type: Number, required: true },
-    duration: { type: Number, required: true } // minutes
-  },
-  { _id: false }
-);
-
-
-const shopSchema = new Schema (
+const shopSchema = new Schema(
     {
-        name : {
-            type : String,
-            required : true,
-            index : true
+        name: {
+            type: String,
+            required: true,
+            index: true
         },
         owner: {
-            type : Schema.Types.ObjectId,
-            ref : "User",
-            required : true
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true
         },
-        address : {
-            street : String,
-            city : String,
-            state : String,
-            country : String
+        address: {
+            street: String,
+            city: String,
+            state: String,
+            country: String
         },
-        location: {
-      type: {
-        type: String,
-        enum: ['Point'],
-        default: 'Point'
-      },
-      coordinates: {
-        type: [Number], // [longitude, latitude]
-        required: true
-      }
-    },
-        phone : Number,
-       services: [serviceSchema],
-        isActive : {
-            type : Boolean,
-            default : true
-        }, 
-            averageWaitTime : {
-                type : Number,
-                default : 15
+        phone: String, // Changed from Number to String
+        services: [{
+            name: String,
+            price: Number,
+            duration: Number
+        }],
+        location: { // ADD THIS FIELD
+            type: {
+                type: String,
+                enum: ['Point'],
+                default: 'Point'
             },
-           
+            coordinates: {
+                type: [Number], // [longitude, latitude]
+                default: [0, 0]
+            }
+        },
+        isActive: {
+            type: Boolean,
+            default: true
+        },
+        averageWaitTime: {
+            type: Number,
+            default: 15
+        }
     },
     {
-        timestamps : true
+        timestamps: true
     }
-)
+);
 
-// Required for geo queries
-shopSchema.index({location : '2dsphere'});
+// Create geospatial index
+shopSchema.index({ location: '2dsphere' });
 
 export default mongoose.model('Shop', shopSchema);
