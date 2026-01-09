@@ -94,18 +94,44 @@ const ShopDetail = () => {
     }
   };
 
-  const toggleShopStatus = async () => {
-    try {
-      const response = await shopService.toggleShopStatus(id);
-      if (response.success) {
-        setShop(prev => ({ ...prev, isActive: response.data.isActive }));
-        toast.success(`Shop ${response.data.isActive ? 'activated' : 'deactivated'}`);
-      }
-    } catch (error) {
-      console.error('Error toggling shop status:', error);
-      toast.error('Failed to update shop status');
+ const toggleShopStatus = async () => {
+  const newStatus = !shop.isActive;
+  const confirmMessage = newStatus 
+    ? 'Are you sure you want to open the shop?'
+    : 'Are you sure you want to close the shop?';
+  
+  if (!window.confirm(confirmMessage)) return;
+
+  try {
+    // Try the toggle endpoint first
+    const response = await shopService.toggleShopStatus(id);
+    
+    if (response.success) {
+      setShop(prev => ({ 
+        ...prev, 
+        isActive: response.data?.isActive ?? newStatus 
+      }));
+      toast.success(`Shop ${newStatus ? 'opened' : 'closed'} successfully!`);
     }
-  };
+  } catch (error) {
+    console.error('Toggle shop status failed:', error);
+    
+    // Fallback to update endpoint if toggle fails
+    try {
+      const fallbackResponse = await shopService.updateShopStatus(id, newStatus);
+      if (fallbackResponse.success) {
+        setShop(prev => ({ 
+          ...prev, 
+          isActive: newStatus 
+        }));
+        toast.success(`Shop ${newStatus ? 'opened' : 'closed'} successfully!`);
+      }
+    } catch (fallbackError) {
+      console.error('Fallback also failed:', fallbackError);
+      toast.error(fallbackError.response?.data?.message || 'Failed to update shop status');
+    }
+  }
+};
 
   if (loading) {
     return (

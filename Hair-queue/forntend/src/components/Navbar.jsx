@@ -42,6 +42,7 @@ const Navbar = () => {
                   <FaShoppingCart className="h-5 w-5" />
                   <span>Shops</span>
                 </Link>
+               
 
                 {/* User Dropdown */}
                 <div className="relative group">

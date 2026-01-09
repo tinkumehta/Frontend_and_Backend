@@ -18,11 +18,11 @@ const CreateShop = () => {
       street: '',
       city: '',
       state: '',
-      country: 'USA'
+      country: 'India'
     },
     services: [
-      { name: 'Haircut', price: 25, duration: 30 },
-      { name: 'Beard Trim', price: 15, duration: 15 }
+      { name: 'Haircut', price: 50, duration: 30 },
+      { name: 'Beard Trim', price: 40, duration: 15 }
     ],
     longitude: '',
     latitude: ''
@@ -49,7 +49,7 @@ const CreateShop = () => {
             street: shop.address?.street || '',
             city: shop.address?.city || '',
             state: shop.address?.state || '',
-            country: shop.address?.country || 'USA'
+            country: shop.address?.country || 'India'
           },
           services: shop.services || [],
           longitude: shop.location?.coordinates?.[0] || '',
@@ -337,7 +337,7 @@ const CreateShop = () => {
                     value={formData.address.country}
                     onChange={handleChange}
                   >
-                    <option value="USA">United States</option>
+                    <option value="India">India</option>
                     <option value="Canada">Canada</option>
                     <option value="UK">United Kingdom</option>
                     <option value="Australia">Australia</option>

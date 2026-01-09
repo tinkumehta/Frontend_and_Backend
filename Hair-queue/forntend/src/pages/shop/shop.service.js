@@ -38,10 +38,14 @@ export const shopService = {
     return response.data;
   },
 
-  // Toggle shop status - FIXED URL
   toggleShopStatus: async (shopId) => {
-    const response = await api.patch(`/shop/${shopId}/toggle`); // Changed from '/shops/:id/toggle'
-    return response.data;
+    try {
+      const response = await api.patch(`/shop/${shopId}/toggle`);
+      return response.data;
+    } catch (error) {
+      console.error('Toggle shop status error:', error.response?.data);
+      throw error;
+    }
   },
 
   // Add service to shop - ADD NEW METHOD

@@ -207,27 +207,27 @@ export const updateShop = asyncHandler(async (req, res) => {
 });
 
 export const toggleShopStatus = asyncHandler(async (req, res) => {
-    const { shopId } = req.params;
+  const shopId = req.params.id || req.params.shopId; // Handle both cases
     
-    if (!mongoose.Types.ObjectId.isValid(shopId)) {
-        throw new ApiError(400, "Invalid shop id");
-    }
-    
-    const shop = await Shop.findById(shopId);
-    
-    if (!shop) {
-        throw new ApiError(404, "Shop not found");
-    }
+  if (!mongoose.Types.ObjectId.isValid(shopId)) {
+    throw new ApiError(400, "Invalid shop ID");
+  }
+  
+  const shop = await Shop.findById(shopId);
+  
+  if (!shop) {
+    throw new ApiError(404, "Shop not found");
+  }
 
-    // Check authorization
-    if (shop.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-        throw new ApiError(403, "You are not authorized to update this shop");
-    }
+  // Check authorization
+  if (shop.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    throw new ApiError(403, "You are not authorized to update this shop");
+  }
 
-    shop.isActive = !shop.isActive;
-    await shop.save();
-    
-    return res.status(200).json( // Fixed: 201 to 200
-        new ApiResponse(200, { isActive: shop.isActive }, "Shop status updated")
-    );
+  shop.isActive = !shop.isActive;
+  await shop.save();
+  
+  return res.status(200).json(
+    new ApiResponse(200, { isActive: shop.isActive }, "Shop status updated")
+  );
 });

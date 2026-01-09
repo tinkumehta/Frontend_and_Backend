@@ -90,9 +90,6 @@ function App() {
                 <CreateShop />
               </ProtectedRoute>
             } />
-
-            {/* 404 Route
-            <Route path="*" element={<NotFound />} />  */}
           </Routes>
         </div>
       </AuthProvider>

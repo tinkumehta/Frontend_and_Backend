@@ -33,7 +33,7 @@ const Dashboard = () => {
     const shopsResponse = await shopService.getAllShops({ limit: 3 });
     if (shopsResponse.success) {
       setRecentShops(shopsResponse.data?.shops || []);
-      console.log('Recent shops:', shopsResponse.data?.shops); // Debug log
+     // console.log('Recent shops:', shopsResponse.data?.shops); // Debug log
     }
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
