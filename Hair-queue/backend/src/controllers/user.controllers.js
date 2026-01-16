@@ -3,6 +3,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import User from '../models/user.models.js'
+import { sendOtpEmail } from "../middlewares/email.middlewares.js";
+import { generateOtp } from "../utils/generateOtp.js";
 
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -60,6 +62,9 @@ const registerUser = asyncHandler (async (req, res) => {
 
     const avatar = await uploadOnCloudinary(avatarImageLocalPath);
 
+    const otp = generateOtp();
+
+
     const user = await User.create({
         fullName,
         email,
@@ -68,10 +73,13 @@ const registerUser = asyncHandler (async (req, res) => {
         password,
         phone,
         role: role || 'user',
+        emailOtp : otp,
+        emailOtpExpires : new Date(Date.now() +10 * 60 * 1000)
+    });
 
-    })
+    await sendOtpEmail(email, otp);
 
-    const createdUser = await User.findById(user._id).select("-password ");
+    const createdUser = await User.findById(user._id).select("-password -emailOtp");
 
     if (!createdUser) {
         throw new ApiError(500, "Register error's")
@@ -168,11 +176,39 @@ const changePassword = asyncHandler (async (req, res) => {
     .json(new ApiResponse(201, {}, "Password is change Successfully"))
 })
 
+const verifyEmailOtp = asyncHandler (async (req, res) => {
+    const {email, otp} = req.body;
 
+    const user = await User.findOne({email});
+
+    if (! user) {
+        throw new ApiError(404, "User not found");
+    }
+    if (email.emailVerified) {
+        throw new ApiError(400, "Already verified")
+    }
+
+    if (
+        user.emailOtp !== otp ||
+        user.emailOtpExpires < Date.now()
+    ) {
+        throw new ApiError(400, "Invalid or expired OTP")
+    }
+
+    user.emailVerified = true;
+    user.emailOtp = undefined;
+    user.emailOtpExpires = undefined;
+    await user.save();
+
+    return res.status(201).json(
+        new ApiResponse(201, {}, "Email verified successfully")
+    )
+})
 export {
     registerUser,
     loginUser,
     logoutUser,
     getUser,
     changePassword,
+    verifyEmailOtp,
 }

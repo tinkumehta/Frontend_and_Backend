@@ -3,7 +3,8 @@ import {
     getUser,
     loginUser,
     logoutUser,
-    registerUser
+    registerUser,
+    verifyEmailOtp
  } from "../controllers/user.controllers.js"; 
  import { upload } from "../middlewares/multer.middlewares.js";
  import { verfiyJWT } from "../middlewares/auth.middlewares.js";
@@ -25,5 +26,7 @@ import {
  router.route("/logout").post(verfiyJWT, logoutUser)
  router.route("/change-password").post(upload.none(),verfiyJWT, changePassword)
  router.route("/current-user").get( verfiyJWT,  getUser)
+
+ router.route("/verify-email").post(upload.none(), verifyEmailOtp)
 
  export default router;

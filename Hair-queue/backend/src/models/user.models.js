@@ -39,6 +39,12 @@ const userSchema = new Schema(
     phone: {
       type: String
     },
+    emailVerified : {
+      type : Boolean,
+      default : false
+    },
+    emailOtp : String,
+    emailOtpExpires: Date,
     refreshToken: {
       type: String
     }

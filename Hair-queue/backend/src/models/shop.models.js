@@ -17,7 +17,8 @@ const shopSchema = new Schema(
             street: String,
             city: String,
             state: String,
-            country: String
+            country: String,
+            zipCode : String
         },
         phone: String, // Changed from Number to String
         services: [{
