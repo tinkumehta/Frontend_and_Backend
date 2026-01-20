@@ -20,6 +20,7 @@ import shopRouter from './routes/shop.routes.js'
 import queueRouter from './routes/queue.routes.js'
 
 
+app.get("/", (req, res) => res.send("Tinku kumar"));
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/shop", shopRouter)
 app.use("/api/v1/queue", queueRouter)
