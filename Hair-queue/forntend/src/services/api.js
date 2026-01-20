@@ -1,7 +1,7 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_BASE_URL =  'http://localhost:5000/api/v1';
+const API_BASE_URL =  'https://hair-git-main-tinku-kumars-projects-b71fff8b.vercel.app/';
 
 //console.log('API Base URL:', API_BASE_URL); // Debug log
 
