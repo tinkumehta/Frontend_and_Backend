@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+// pages/shops/CreateShop.jsx
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { shopService } from './shop.service';
-import { useAuth } from '../../context/AuthContext'
-import { FaMapMarkerAlt, FaPhone, FaPlus, FaTrash, FaLocationArrow } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
+import { 
+  FaMapMarkerAlt, FaPhone, FaPlus, FaTrash, FaLocationArrow, 
+  FaMap, FaClock, FaEnvelope, FaInfoCircle 
+} from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 const CreateShop = () => {
-  const { id } = useParams(); // For edit mode
+  const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -14,19 +18,34 @@ const CreateShop = () => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    email: '',
+    description: '',
     address: {
       street: '',
       city: '',
       state: '',
-      country: 'India'
+      country: 'India',
+      zipCode: ''
     },
     services: [
-      { name: 'Haircut', price: 50, duration: 30 },
-      { name: 'Beard Trim', price: 40, duration: 15 }
+      { name: 'Haircut', price: 50, duration: 30, description: '' },
+      { name: 'Beard Trim', price: 40, duration: 15, description: '' }
     ],
     longitude: '',
-    latitude: ''
+    latitude: '',
+    operatingHours: {
+      monday: { open: '09:00', close: '18:00' },
+      tuesday: { open: '09:00', close: '18:00' },
+      wednesday: { open: '09:00', close: '18:00' },
+      thursday: { open: '09:00', close: '18:00' },
+      friday: { open: '09:00', close: '18:00' },
+      saturday: { open: '10:00', close: '16:00' },
+      sunday: { open: '10:00', close: '14:00' }
+    }
   });
+  const [showMap, setShowMap] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
+  const mapContainerRef = useRef(null);
 
   // Check if we're in edit mode
   useEffect(() => {
@@ -45,15 +64,27 @@ const CreateShop = () => {
         setFormData({
           name: shop.name || '',
           phone: shop.phone || '',
+          email: shop.email || '',
+          description: shop.description || '',
           address: {
             street: shop.address?.street || '',
             city: shop.address?.city || '',
             state: shop.address?.state || '',
-            country: shop.address?.country || 'India'
+            country: shop.address?.country || 'India',
+            zipCode: shop.address?.zipCode || ''
           },
           services: shop.services || [],
           longitude: shop.location?.coordinates?.[0] || '',
-          latitude: shop.location?.coordinates?.[1] || ''
+          latitude: shop.location?.coordinates?.[1] || '',
+          operatingHours: shop.operatingHours || {
+            monday: { open: '09:00', close: '18:00' },
+            tuesday: { open: '09:00', close: '18:00' },
+            wednesday: { open: '09:00', close: '18:00' },
+            thursday: { open: '09:00', close: '18:00' },
+            friday: { open: '09:00', close: '18:00' },
+            saturday: { open: '10:00', close: '16:00' },
+            sunday: { open: '10:00', close: '14:00' }
+          }
         });
       }
     } catch (error) {
@@ -87,7 +118,11 @@ const CreateShop = () => {
 
   const handleServiceChange = (index, field, value) => {
     const updatedServices = [...formData.services];
-    updatedServices[index][field] = field === 'price' || field === 'duration' ? parseFloat(value) || 0 : value;
+    if (field === 'price' || field === 'duration') {
+      updatedServices[index][field] = parseFloat(value) || 0;
+    } else {
+      updatedServices[index][field] = value;
+    }
     
     setFormData(prev => ({
       ...prev,
@@ -98,7 +133,7 @@ const CreateShop = () => {
   const addService = () => {
     setFormData(prev => ({
       ...prev,
-      services: [...prev.services, { name: '', price: '', duration: 30 }]
+      services: [...prev.services, { name: '', price: '', duration: 30, description: '' }]
     }));
   };
 
@@ -124,6 +159,7 @@ const CreateShop = () => {
             latitude: position.coords.latitude.toString(),
             longitude: position.coords.longitude.toString()
           }));
+          setShowMap(true);
           toast.success('Location captured successfully!');
         },
         (error) => {
@@ -133,6 +169,34 @@ const CreateShop = () => {
       );
     } else {
       toast.error('Geolocation is not supported by your browser');
+    }
+  };
+
+  const geocodeAddress = async () => {
+    const { street, city, state, country } = formData.address;
+    if (!street || !city) {
+      toast.error('Please enter street address and city');
+      return;
+    }
+
+    try {
+      setGeocoding(true);
+      const address = `${street}, ${city}, ${state} ${country}`;
+      const response = await shopService.geocodeAddress(address);
+      
+      if (response.success) {
+        setFormData(prev => ({
+          ...prev,
+          latitude: response.data.latitude.toString(),
+          longitude: response.data.longitude.toString()
+        }));
+        setShowMap(true);
+        toast.success('Address found on map!');
+      }
+    } catch (error) {
+      toast.error('Could not find address. Please enter coordinates manually.');
+    } finally {
+      setGeocoding(false);
     }
   };
 
@@ -202,6 +266,19 @@ const CreateShop = () => {
     }
   };
 
+  const handleOperatingHourChange = (day, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      operatingHours: {
+        ...prev.operatingHours,
+        [day]: {
+          ...prev.operatingHours[day],
+          [field]: value
+        }
+      }
+    }));
+  };
+
   if (loading && isEditMode) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -212,7 +289,7 @@ const CreateShop = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -237,7 +314,10 @@ const CreateShop = () => {
           <form onSubmit={handleSubmit} className="p-6">
             {/* Basic Information */}
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Basic Information</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b flex items-center">
+                <FaInfoCircle className="mr-2" />
+                Basic Information
+              </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -272,12 +352,46 @@ const CreateShop = () => {
                     />
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <input
+                      type="email"
+                      name="email"
+                      className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="shop@example.com"
+                    />
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    name="description"
+                    rows="3"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder="Tell customers about your barbershop..."
+                  />
+                </div>
               </div>
             </div>
 
             {/* Address */}
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Address</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b flex items-center">
+                <FaMapMarkerAlt className="mr-2" />
+                Address
+              </h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
@@ -329,6 +443,20 @@ const CreateShop = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ZIP Code
+                  </label>
+                  <input
+                    type="text"
+                    name="address.zipCode"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                    value={formData.address.zipCode}
+                    onChange={handleChange}
+                    placeholder="10001"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Country
                   </label>
                   <select
@@ -338,6 +466,7 @@ const CreateShop = () => {
                     onChange={handleChange}
                   >
                     <option value="India">India</option>
+                    <option value="USA">United States</option>
                     <option value="Canada">Canada</option>
                     <option value="UK">United Kingdom</option>
                     <option value="Australia">Australia</option>
@@ -350,51 +479,143 @@ const CreateShop = () => {
             {/* Location Coordinates */}
             <div className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">
-                Location (Optional)
+                Location
                 <span className="text-sm text-gray-500 font-normal ml-2">- For accurate distance calculation</span>
               </h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Latitude
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    name="latitude"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                    value={formData.latitude}
-                    onChange={handleChange}
-                    placeholder="40.7128"
-                  />
-                </div>
+              <div className="space-y-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Latitude
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        name="latitude"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        value={formData.latitude}
+                        onChange={handleChange}
+                        placeholder="40.7128"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Longitude
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    name="longitude"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                    value={formData.longitude}
-                    onChange={handleChange}
-                    placeholder="-74.0060"
-                  />
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Longitude
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        name="longitude"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        value={formData.longitude}
+                        onChange={handleChange}
+                        placeholder="-74.0060"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-4">
+                    <button
+                      type="button"
+                      onClick={getCurrentLocation}
+                      className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-green-100 text-green-700 font-medium rounded-lg hover:bg-green-200 transition disabled:opacity-50"
+                      disabled={geocoding}
+                    >
+                      <FaLocationArrow className="h-5 w-5" />
+                      Current Location
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={geocodeAddress}
+                      className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-blue-100 text-blue-700 font-medium rounded-lg hover:bg-blue-200 transition disabled:opacity-50"
+                      disabled={geocoding}
+                    >
+                      <FaMap className="h-5 w-5" />
+                      {geocoding ? 'Finding...' : 'Find on Map'}
+                    </button>
+                  </div>
                 </div>
-
-                <div className="flex items-end">
+                
+                {/* Map Toggle */}
+                <div>
                   <button
                     type="button"
-                    onClick={getCurrentLocation}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-100 text-green-700 font-medium rounded-lg hover:bg-green-200 transition"
+                    onClick={() => setShowMap(!showMap)}
+                    className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
                   >
-                    <FaLocationArrow className="h-5 w-5" />
-                    Use Current Location
+                    <FaMap className="h-4 w-4 mr-2" />
+                    {showMap ? 'Hide Map' : 'Show Map'} →
                   </button>
+                  
+                  {showMap && (
+                    <div className="mt-4 bg-gray-100 rounded-lg p-4">
+                      <div 
+                        ref={mapContainerRef}
+                        className="h-64 rounded-lg overflow-hidden flex items-center justify-center bg-gradient-to-r from-blue-100 to-purple-100"
+                      >
+                        {formData.latitude && formData.longitude ? (
+                          <div className="text-center">
+                            <FaMap className="h-12 w-12 text-blue-500 mx-auto mb-2" />
+                            <p className="text-gray-700 font-medium">Location Set</p>
+                            <p className="text-sm text-gray-600">
+                              {formData.latitude}, {formData.longitude}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="text-center">
+                            <FaMap className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+                            <p className="text-gray-600">Enter coordinates to view on map</p>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-2 text-center">
+                        {formData.latitude && formData.longitude 
+                          ? 'Location coordinates are set'
+                          : 'Enter coordinates or use buttons above to set location'}
+                      </p>
+                    </div>
+                  )}
                 </div>
+              </div>
+            </div>
+
+            {/* Operating Hours */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b flex items-center">
+                <FaClock className="mr-2" />
+                Operating Hours
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {Object.entries(formData.operatingHours).map(([day, hours]) => (
+                  <div key={day} className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="font-medium text-gray-900 capitalize mb-3">{day}</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Open</label>
+                        <input
+                          type="time"
+                          value={hours.open}
+                          onChange={(e) => handleOperatingHourChange(day, 'open', e.target.value)}
+                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Close</label>
+                        <input
+                          type="time"
+                          value={hours.close}
+                          onChange={(e) => handleOperatingHourChange(day, 'close', e.target.value)}
+                          className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -429,8 +650,8 @@ const CreateShop = () => {
                       )}
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Service Name *
                         </label>
@@ -471,6 +692,19 @@ const CreateShop = () => {
                           value={service.duration}
                           onChange={(e) => handleServiceChange(index, 'duration', e.target.value)}
                           placeholder="30"
+                        />
+                      </div>
+                      
+                      <div className="md:col-span-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Description
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                          value={service.description}
+                          onChange={(e) => handleServiceChange(index, 'description', e.target.value)}
+                          placeholder="Brief description of the service..."
                         />
                       </div>
                     </div>

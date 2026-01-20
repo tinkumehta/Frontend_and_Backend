@@ -50,6 +50,6 @@ const queueSchema = new Schema(
 );
 
 // Prevent same user from joining same shop queue twice
-queueSchema.index({ shop: 1, customer: 1 }, { unique: true });
+queueSchema.index({ shop: 1, customer: 0 }, { unique: true });
 
 export default mongoose.model('Queue', queueSchema);

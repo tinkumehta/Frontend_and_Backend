@@ -1,3 +1,4 @@
+// Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -18,30 +19,57 @@ const Dashboard = () => {
   }, [user]);
 
   const fetchData = async () => {
-  try {
-    setLoading(true);
-    
-    // If user is barber, fetch their shops
-    if (user?.role === 'barber') {
-      const myShopsResponse = await shopService.getMyShops();
-      if (myShopsResponse.success) {
-        setMyShops(myShopsResponse.data || []);
+    try {
+      setLoading(true);
+      
+      // If user is barber, fetch their shops
+      if (user?.role === 'barber') {
+        try {
+          const myShopsResponse = await shopService.getMyShops();
+        //  console.log('My shops response:', myShopsResponse); // Debug log
+          
+          // Handle response structure
+          if (myShopsResponse.success) {
+            // Ensure we have an array
+            const shopsData = myShopsResponse.data?.shops || myShopsResponse.data || myShopsResponse.shops || [];
+            setMyShops(Array.isArray(shopsData) ? shopsData : []);
+          } else {
+            // Handle different response structures
+            const shopsData = myShopsResponse?.data || myShopsResponse?.shops || [];
+            setMyShops(Array.isArray(shopsData) ? shopsData : []);
+          }
+        } catch (shopError) {
+          console.error('Error fetching my shops:', shopError);
+          setMyShops([]);
+          toast.error('Failed to load your shops');
+        }
       }
+      
+      // Fetch recent shops for all users
+      try {
+        const shopsResponse = await shopService.getAllShops({ limit: 3 });
+       // console.log('Recent shops response:', shopsResponse); // Debug log
+        
+        if (shopsResponse.success) {
+          const recentShopsData = shopsResponse.data?.shops || shopsResponse.shops || [];
+          setRecentShops(Array.isArray(recentShopsData) ? recentShopsData : []);
+        } else {
+          // Handle different response structures
+          const recentShopsData = shopsResponse?.data || shopsResponse?.shops || [];
+          setRecentShops(Array.isArray(recentShopsData) ? recentShopsData : []);
+        }
+      } catch (recentError) {
+        console.error('Error fetching recent shops:', recentError);
+        setRecentShops([]);
+        toast.error('Failed to load recent shops');
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
     }
-    
-    // Fetch recent shops for all users
-    const shopsResponse = await shopService.getAllShops({ limit: 3 });
-    if (shopsResponse.success) {
-      setRecentShops(shopsResponse.data?.shops || []);
-     // console.log('Recent shops:', shopsResponse.data?.shops); // Debug log
-    }
-  } catch (error) {
-    console.error('Error fetching dashboard data:', error);
-    toast.error('Failed to load dashboard data');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -150,7 +178,7 @@ const Dashboard = () => {
                   </Link>
                 </div>
                 
-                {myShops.length === 0 ? (
+                {!Array.isArray(myShops) || myShops.length === 0 ? (
                   <div className="text-center py-8">
                     <FaCut className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-600">You don't have any shops yet</p>
@@ -162,61 +190,63 @@ const Dashboard = () => {
                     </Link>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {myShops.slice(0, 4).map((shop) => (
-                      <div key={shop._id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition">
-                        <div className="flex justify-between items-start mb-3">
-                          <h3 className="font-bold text-gray-900 truncate">{shop.name}</h3>
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            shop.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {shop.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-2 mb-4">
-                          <div className="flex items-center text-sm text-gray-600">
-                            <FaMapMarkerAlt className="h-4 w-4 mr-2" />
-                            <span className="truncate">{shop.address?.city}, {shop.address?.state}</span>
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {myShops.slice(0, 4).map((shop) => (
+                        <div key={shop._id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition">
+                          <div className="flex justify-between items-start mb-3">
+                            <h3 className="font-bold text-gray-900 truncate">{shop.name}</h3>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              shop.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {shop.isActive ? 'Active' : 'Inactive'}
+                            </span>
                           </div>
-                          <div className="flex items-center text-sm text-gray-600">
-                            <FaPhone className="h-4 w-4 mr-2" />
-                            <span>{shop.phone}</span>
+                          
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center text-sm text-gray-600">
+                              <FaMapMarkerAlt className="h-4 w-4 mr-2" />
+                              <span className="truncate">{shop.address?.city}, {shop.address?.state}</span>
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600">
+                              <FaPhone className="h-4 w-4 mr-2" />
+                              <span>{shop.phone}</span>
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600">
+                              <FaUsers className="h-4 w-4 mr-2" />
+                              <span>{shop.services?.length || 0} services</span>
+                            </div>
                           </div>
-                          <div className="flex items-center text-sm text-gray-600">
-                            <FaUsers className="h-4 w-4 mr-2" />
-                            <span>{shop.services?.length || 0} services</span>
+                          
+                          <div className="flex space-x-2">
+                            <Link
+                              to={`/shops/${shop._id}`}
+                              className="flex-1 text-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm"
+                            >
+                              View
+                            </Link>
+                            <Link
+                              to={`/shops/edit/${shop._id}`}
+                              className="flex-1 text-center px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm"
+                            >
+                              Edit
+                            </Link>
                           </div>
                         </div>
-                        
-                        <div className="flex space-x-2">
-                          <Link
-                            to={`/shops/${shop._id}`}
-                            className="flex-1 text-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm"
-                          >
-                            View
-                          </Link>
-                          <Link
-                            to={`/shops/edit/${shop._id}`}
-                            className="flex-1 text-center px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm"
-                          >
-                            Edit
-                          </Link>
-                        </div>
+                      ))}
+                    </div>
+                    
+                    {myShops.length > 4 && (
+                      <div className="mt-4 text-center">
+                        <Link
+                          to="/my-shops"
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          View all {myShops.length} shops →
+                        </Link>
                       </div>
-                    ))}
-                  </div>
-                )}
-                
-                {myShops.length > 4 && (
-                  <div className="mt-4 text-center">
-                    <Link
-                      to="/my-shops"
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      View all {myShops.length} shops →
-                    </Link>
-                  </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -225,73 +255,75 @@ const Dashboard = () => {
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Barbershops</h2>
               
-              {recentShops.length === 0 ? (
+              {!Array.isArray(recentShops) || recentShops.length === 0 ? (
                 <div className="text-center py-8">
                   <FaCut className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-600">No shops available</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {recentShops.map((shop) => (
-                    <div key={shop._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3">
-                            <h3 className="font-bold text-gray-900">{shop.name}</h3>
-                            <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                              {shop.averageWaitTime || 15} min wait
-                            </span>
+                <>
+                  <div className="space-y-4">
+                    {recentShops.map((shop) => (
+                      <div key={shop._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3">
+                              <h3 className="font-bold text-gray-900">{shop.name}</h3>
+                              <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                {shop.averageWaitTime || 15} min wait
+                              </span>
+                            </div>
+                            
+                            <div className="mt-2 grid grid-cols-2 gap-2">
+                              <div className="flex items-center text-sm text-gray-600">
+                                <FaMapMarkerAlt className="h-4 w-4 mr-2" />
+                                <span>{shop.address?.city}, {shop.address?.state}</span>
+                              </div>
+                              <div className="flex items-center text-sm text-gray-600">
+                                <FaPhone className="h-4 w-4 mr-2" />
+                                <span>{shop.phone}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="mt-3 flex items-center space-x-4">
+                              <div className="flex items-center">
+                                {[...Array(5)].map((_, i) => (
+                                  <FaStar key={i} className={`h-4 w-4 ${
+                                    i < 4 ? 'text-yellow-400' : 'text-gray-300'
+                                  }`} />
+                                ))}
+                                <span className="ml-2 text-sm text-gray-600">4.5</span>
+                              </div>
+                              <span className="text-sm text-gray-600">
+                                {shop.services?.length || 0} services
+                              </span>
+                            </div>
                           </div>
                           
-                          <div className="mt-2 grid grid-cols-2 gap-2">
-                            <div className="flex items-center text-sm text-gray-600">
-                              <FaMapMarkerAlt className="h-4 w-4 mr-2" />
-                              <span>{shop.address?.city}, {shop.address?.state}</span>
-                            </div>
-                            <div className="flex items-center text-sm text-gray-600">
-                              <FaPhone className="h-4 w-4 mr-2" />
-                              <span>{shop.phone}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="mt-3 flex items-center space-x-4">
-                            <div className="flex items-center">
-                              {[...Array(5)].map((_, i) => (
-                                <FaStar key={i} className={`h-4 w-4 ${
-                                  i < 4 ? 'text-yellow-400' : 'text-gray-300'
-                                }`} />
-                              ))}
-                              <span className="ml-2 text-sm text-gray-600">4.5</span>
-                            </div>
-                            <span className="text-sm text-gray-600">
-                              {shop.services?.length || 0} services
-                            </span>
-                          </div>
+                          <Link
+                            to={`/shops/${shop._id}`}
+                            className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                          >
+                            View
+                          </Link>
                         </div>
-                        
-                        <Link
-                          to={`/shops/${shop._id}`}
-                          className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                        >
-                          View
-                        </Link>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                  
+                  <div className="mt-6 text-center">
+                    <Link
+                      to="/shops"
+                      className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-800"
+                    >
+                      <span>Browse all shops</span>
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </Link>
+                  </div>
+                </>
               )}
-              
-              <div className="mt-6 text-center">
-                <Link
-                  to="/shops"
-                  className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-800"
-                >
-                  <span>Browse all shops</span>
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </Link>
-              </div>
             </div>
           </div>
 
