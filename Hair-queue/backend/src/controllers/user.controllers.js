@@ -35,39 +35,47 @@ const registerUser = asyncHandler (async (req, res) => {
 
     const {fullName, email, password, role, phone, username} = req.body;
 
-   
+    if (
+        [fullName,username, email, password, role, phone].some((field) => field?.trim() === "")) {
+        throw new ApiError(400, "your field is empyt")
+    }
 
-if (!fullName || !username || !email || !password) {
-  throw new ApiError(400, "Missing required fields");
-}
+    const existedUser = await User.findOne({
+        $or : [{username}, {email}]
+    });
+    if (existedUser) {
+        throw new ApiError(400, 'User is already exists')
+    }
+    // const avatarLocalPath = req.files?.avatar[0]?.path;
 
-const existedUser = await User.findOne({
-  $or: [{ username }, { email }]
-});
+    // if (!avatarLocalPath){
+    //     throw new ApiError(400, "Avatar file is missing")
+    // }
+    // const avatar = await uploadOnCloudinary(avatarLocalPath)
+    // if (!avatar) {
+    //     throw new ApiError(404, "Avatar file uploa failed")
+    // }
+    let avatarImageLocalPath;
+    if (req.files && Array.isArray(req.files.avatar) && req.files.avatar.length > 0){
+        avatarImageLocalPath = req.files.avatar[0].path
+    }
 
-if (existedUser) {
-  throw new ApiError(400, "User already exists");
-}
+    const avatar = await uploadOnCloudinary(avatarImageLocalPath);
 
-let avatar;
-if (req.files?.avatar?.[0]?.path) {
-  avatar = await uploadOnCloudinary(req.files.avatar[0].path);
-}
+    const otp = generateOtp();
 
-const otp = generateOtp();
 
-const user = await User.create({
-  fullName,
-  email,
-  username,
-  avatar: avatar?.url || "",
-  password,
-  phone,
-  role: role || "user",
-  emailOtp: otp,
-  emailOtpExpires: new Date(Date.now() + 10 * 60 * 1000)
-});
-
+    const user = await User.create({
+        fullName,
+        email,
+        username,
+        avatar: avatar?.url || "",
+        password,
+        phone,
+        role: role || 'user',
+        emailOtp : otp,
+        emailOtpExpires : new Date(Date.now() +10 * 60 * 1000)
+    });
 
     await sendOtpEmail(email, otp);
 
