@@ -1,9 +1,9 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_BASE_URL =  'https://hair-git-main-tinku-kumars-projects-b71fff8b.vercel.app/';
+const API_BASE_URL =  import.meta.VITE_APP_API_URL || 'https://hair-peach.vercel.app/api/v1';
 
-//console.log('API Base URL:', API_BASE_URL); // Debug log
+console.log('API Base URL:', API_BASE_URL); // Debug log
 
 const api = axios.create({
   baseURL: API_BASE_URL,
