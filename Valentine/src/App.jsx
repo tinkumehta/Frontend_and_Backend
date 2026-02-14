@@ -1,102 +1,173 @@
-import { useState } from "react";
-import lovesvg from "./assets/All You Need Is Love SVG Cut File.svg";
-import lovesvg2 from "./assets/Love In The Air SVG Cut File.svg";
+import { useState, useEffect } from 'react';
+import './App.css';
 
-export default function Page() {
-  const [noCount, setNoCount] = useState(0);
-  const [yesPressed, setYesPressed] = useState(false);
-  const yesButtonSize = noCount * 20 + 16;
+function App() {
+  const [step, setStep] = useState(0);
+  const [showRing, setShowRing] = useState(false);
+  const [userInput, setUserInput] = useState('');
+  const [matrixMode, setMatrixMode] = useState(false);
 
-  const handleNoClick = () => {
-    setNoCount(noCount + 1);
+  const proposalLines = [
+    "> Initializing Love Protocol v2.0...",
+    "> Scanning heart parameters...",
+    "> Found critical dependency: [REDACTED]",
+    "> Analyzing compatibility matrix...",
+    "> COMPATIBILITY: 100% - EXCEPTION: Missing component",
+    "> Required component: [YOU]",
+    "> Attempting to install [YOU] into [MY LIFE]...",
+    "> ERROR: Cannot install without mutual consent",
+    "> Initiating manual override...",
+    "> [YOUR NAME] requests merge with [THEIR NAME]",
+    "> Please confirm merge request:"
+  ];
+
+  useEffect(() => {
+    if (step < proposalLines.length) {
+      const timer = setTimeout(() => {
+        setStep(step + 1);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [step]);
+
+  const handleYes = () => {
+    setShowRing(true);
+    setMatrixMode(true);
+    setTimeout(() => {
+      setMatrixMode(false);
+    }, 5000);
   };
 
-  const getNoButtonText = () => {
-    const phrases = [
-      "No",
-      "Are you sure?",
-      "Really sure?",
-      "Think again!",
-      "Last chance!",
-      "Surely not?",
-      "You might regret this!",
-      "Give it another thought!",
-      "Are you absolutely certain?",
-      "This could be a mistake!",
-      "Have a heart!",
-      "Don't be so cold!",
-      "Change of heart?",
-      "Wouldn't you reconsider?",
-      "Is that your final answer?",
-      "You're breaking my heart ;(",
-      "Is that your final answer?",
-      "You're breaking my heart ;(",
-      "Plsss? :( You're breaking my heart",
-    ];
+  const handleNo = () => {
+    alert("ERROR: Invalid option. System override initiated.");
+    setStep(proposalLines.length - 1);
+  };
 
-    return phrases[Math.min(noCount, phrases.length - 1)];
+  const handleKeyPress = (e) => {
+    if (e.key === 'y' || e.key === 'Y') {
+      handleYes();
+    } else if (e.key === 'n' || e.key === 'N') {
+      handleNo();
+    }
   };
 
   return (
-    <div className="overflow-hidden flex flex-col items-center justify-center pt-4 h-screen -mt-16 selection:bg-rose-600 selection:text-white text-zinc-900">
-      <h4 className="text-3xl">19/10/2024</h4>
-      {yesPressed ? (
-        <>
-          <img src="https://media.tenor.com/gUiu1zyxfzYAAAAi/bear-kiss-bear-kisses.gif" />
-          <div className="text-4xl md:text-6xl font-bold my-4">
-            Ok Yayyyyy!!!
-          </div>
-        </>
-      ) : (
-        <>
-          <img
-            src={lovesvg}
-            className="fixed animate-pulse top-10 md:left-24 left-6 md:w-40 w-28"
-          />
-          <img
-            src={lovesvg2}
-            className="fixed bottom-16 -z-10 animate-pulse md:right-24 right-10 md:w-40 w-32"
-          />
-          <img
-            className="h-[230px] rounded-lg shadow-lg"
-            src="https://gifdb.com/images/high/cute-love-bear-roses-ou7zho5oosxnpo6k.webp"
-          />
-          <h1 className="text-4xl md:text-6xl my-4 text-center">
-            Will you be my Valentine?
-          </h1>
-          <div className="flex flex-wrap justify-center gap-2 items-center">
-            <button
-              className={`bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg mr-4  `}
-              style={{ fontSize: yesButtonSize }}
-              onClick={() => setYesPressed(true)}
-            >
-              Yes
-            </button>
-            <button
-              onClick={handleNoClick}
-              className=" bg-rose-500 hover:bg-rose-600 rounded-lg text-white font-bold py-2 px-4 p-20 h-15 w-30"
-            >
-              {noCount === 0 ? "No" : getNoButtonText()}
-            </button>
-          </div>
-        </>
-      )}
-      <Footer />
+    <div className={`terminal-container ${matrixMode ? 'matrix-rain' : ''}`}>
+      <div className="terminal-header">
+        <span className="terminal-title">♥ LOVE_TERMINAL v2.0 ♥</span>
+        <div className="terminal-controls">
+          <span className="control close">✕</span>
+          <span className="control minimize">─</span>
+          <span className="control maximize">□</span>
+        </div>
+      </div>
+
+      <div className="terminal-content" onKeyDown={handleKeyPress} tabIndex={0}>
+        {/* ASCII Heart Animation */}
+        <pre className="ascii-heart">
+          {`
+    @@@    @@@ 
+   @@@@@  @@@@@ 
+  @@@@@@@@@@@@@
+   @@@@@@@@@@@
+     @@@@@@@
+       @@@
+        @
+          `}
+        </pre>
+
+        {/* Terminal Lines */}
+        <div className="terminal-lines">
+          {proposalLines.slice(0, step).map((line, index) => (
+            <div key={index} className="terminal-line">
+              <span className="prompt">{index === step - 1 ? '>' : '$'}</span>
+              <span className={`line-text ${index === step - 1 ? 'typing' : ''}`}>
+                {line}
+              </span>
+              {index === step - 1 && index < proposalLines.length - 1 && (
+                <span className="cursor">█</span>
+              )}
+            </div>
+          ))}
+
+          {/* User Input Section */}
+          {step >= proposalLines.length && !showRing && (
+            <div className="user-input-section">
+              <div className="terminal-line">
+                <span className="prompt">?</span>
+                <span className="line-text highlight">
+                  ACCEPT MERGE REQUEST? (Y/N)
+                </span>
+              </div>
+              <div className="input-container">
+                <span className="prompt">{'>'}</span>
+                <input
+                  type="text"
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value.toLowerCase())}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      if (userInput === 'y' || userInput === 'yes') {
+                        handleYes();
+                      } else if (userInput === 'n' || userInput === 'no') {
+                        handleNo();
+                      }
+                    }
+                  }}
+                  placeholder="type your answer..."
+                  autoFocus
+                />
+                <span className="cursor">█</span>
+              </div>
+              <div className="button-group">
+                <button className="terminal-btn yes-btn" onClick={handleYes}>
+                  [ YES ]
+                </button>
+                <button className="terminal-btn no-btn" onClick={handleNo}>
+                  [ NO ]
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Success Message */}
+          {showRing && (
+            <div className="success-message">
+              <div className="confetti">
+                {'🎉'.repeat(20)}
+              </div>
+              <pre className="success-ascii">
+                {`
+    ╔══════════════════════════════════╗
+    ║     MERGE SUCCESSFUL! ♥          ║
+    ║     [YOU] + [ME] = FOREVER       ║
+    ║     COMPILATION COMPLETE          ║
+    ╚══════════════════════════════════╝
+                `}
+              </pre>
+              <div className="ring-reveal">
+                <div className="ring-box">
+                  <div className="ring-lid"></div>
+                  <div className="ring">💍</div>
+                </div>
+                <p className="proposal-text">
+                  Will you marry me? <br />
+                  <span className="blink">_</span>
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Status Bar */}
+        <div className="status-bar">
+          <span>♥ HEART: 100%</span>
+          <span>⚡ LOGIC: OVERRIDDEN</span>
+          <span>💾 SAVE POINT: FOREVER</span>
+        </div>
+      </div>
     </div>
   );
 }
 
-const Footer = () => {
-  return (
-    <a
-      className="fixed bottom-2 right-2 backdrop-blur-md opacity-80 hover:opacity-95 border p-1 rounded border-rose-300"
-      href="https://github.com/tinkumehta"
-      target="__blank"
-    >
-      Made with{" "}
-      <span role="img" aria-label="heart">
-        ❤️
-      </span>
-    </a>
-  );
-};
+export default App;
