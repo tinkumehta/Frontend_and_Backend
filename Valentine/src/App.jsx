@@ -151,7 +151,7 @@ function App() {
                   <div className="ring">💍</div>
                 </div>
                 <p className="proposal-text">
-                  Will you marry me? <br />
+                  क्या आप करेंगे मुझसे शादी <br />
                   <span className="blink">_</span>
                 </p>
               </div>
